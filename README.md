@@ -8,3 +8,4 @@ im gonna leave a link here and my advice is to NOT click it like i did (worst mi
 <br>
 https://static.wikia.nocookie.net/among-us-wiki/images/8/84/Among_Us.png/revision/latest?cb=20201019142953
 ok bye
+ Bradley thios is not apropererate for theis claass plaese remove
