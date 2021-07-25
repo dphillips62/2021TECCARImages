@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Move Paddle</title>
+</head>
+
+<body>
+
+    <canvas id="myCanvas" width="800" height="600" style="border:1px solid #000000;"></canvas>
+
+
+</body>
+
+<script>
+    //----------Set up the variables used in the game--------------------------------------------------------------
+
+    var ctx = myCanvas.getContext("2d"); // Get the drawing context for the canvas
+    var FPS = 40; // How many frames per second
+    var leftArrowPressed = false;
+    var rightArrowPressed = false;
+    var paddleHeight = 25;
+    var paddleWidth = 200
+    var ballRadius = 25
+    var gameSpeed = 10; //speed of the game - will make the ball faster or slower
+
+    const paddleHit = new Audio('Boing.mp3');
+    const wallHit = new Audio('DrumBass.mp3');
+    const oops = new Audio('Oops.mp3');
+
+
+    //Set up the paddle - it calls the paddles function and sets up the starting position
+    var myPaddle = new paddles(
+        "https://raw.githubusercontent.com/dphillips62/2021TECCARImages/main/BlackRectangle.png"
+    );
+    //------------Template for the paddle--------------------------------------------------------------------------
+    function paddles(img_url) {
+        this.x = myCanvas.width / 2 - (paddleWidth / 2); //This is the starting x coordinate for the paddle (Middle of screen)
+        this.y = myCanvas.height / 2 - (paddleHeight / 2); //This is the starting y coordinate for the paddle (Middle of screen)
+        this.visible = true
+        this.MyImg = new Image();
+        this.MyImg.src = img_url; //this sets the image
+    }
+
+    // Set up the ball
+    var theBall = new MyBall(
+        "https://raw.githubusercontent.com/dphillips62/2021TECCARImages/main/SoccerBall.png"
+    );
+    //------------Template for the ball----------------------------------------------------------------------------
+    function MyBall(img_url) {
+        this.x = (myCanvas.width / 2) - (ballRadius / 2); //starting x coordinate of the ball
+        this.y = 20; //starting y coordinate of the ball
+        this.velocity_x = 0; //starting velocity left and right of the ball. 0 at the start of game
+        this.velocity_y = 0;//starting velocity up and down of the ball. 0 at the start of game
+        this.MyImg = new Image();
+        this.MyImg.src = img_url;
+    }
+
+    // This function detects whether the paddle and the ball are touching
+    function touchPaddle(thePaddle, Ball) {
+        if (Ball.x >= thePaddle.x && Ball.x <= (thePaddle.x + paddleWidth) && Ball.y <= thePaddle.y + (paddleHeight) && (Ball.y + ballRadius) > thePaddle.y) {
+            return true;
+        }
+        return false;
+    }
+
+
+    //----------Function to restart game -----------------------------------------------------------------------
+    function restart_game() {
+
+        theBall.velocity_x = Math.ceil((Math.random() * gameSpeed) + 2) * (Math.round(Math.random()) ? 1 : -1)
+        theBall.velocity_y = Math.ceil((Math.random() * gameSpeed) + 2) * (Math.round(Math.random()) ? 1 : -1)
+        theBall.x = (myCanvas.width / 2) - (ballRadius / 2);; //starting x coordinate for the ball
+        theBall.y = 20; //starting y coordinate for the ball
+    }
+
+    //This function below runs at 40 fps - it calls lots of functions to show score, check for ball hitting paddles, play sounds and redraw the paddles and ball
+    function Do_a_Frame() {
+
+        //clear the background of the CANVAS
+        ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+
+        //move the ball
+        theBall.x = theBall.x + theBall.velocity_x; //move the x coordinate of the ball
+        theBall.y = theBall.y + theBall.velocity_y; // move the y coordinate of the ball
+
+        //move the paddles x and y coordinates depending on if the right or left arrow pressed ()As long as it is in the CANVAS)
+        if (leftArrowPressed && myPaddle.x > 0) {
+            myPaddle.x = myPaddle.x - 15; //if user has pressed left - paddle goes left
+        }
+        if (rightArrowPressed && myPaddle.x < (myCanvas.width - paddleWidth)) {
+            myPaddle.x = myPaddle.x + 15; //if user has pressed right - paddle goes right
+        }
+
+        //move the ball when it hits the walls
+        if (theBall.y < 0 || theBall.y >= myCanvas.height - ballRadius) { //bounce off the top or bottom
+            theBall.velocity_y = -theBall.velocity_y;
+            wallHit.play();
+        }
+        if (theBall.x < 0 || theBall.x >= myCanvas.width - ballRadius) { //bounce off the right  or left
+            theBall.velocity_x = -theBall.velocity_x;
+            wallHit.play();
+        }
+
+        //Is the ball touching the paddle? If it is, reverse the y coordinate
+        if (touchPaddle(myPaddle, theBall)) {
+            theBall.velocity_y = -theBall.velocity_y; //bounce off the left 
+            theBall.velocity_x = Math.ceil((Math.random() * gameSpeed) + 2) * (Math.round(Math.random()) ? 1 : -1) //it will bounce off the paddle at random angles
+            paddleHit.play()
+        }
+
+        //Finally - draw the paddle and ball back on the screen in the new position
+        ctx.drawImage(myPaddle.MyImg, myPaddle.x, myPaddle.y, paddleWidth, paddleHeight); // draw the thing - Image object, x coord, y coord, width, height)
+        ctx.drawImage(theBall.MyImg, theBall.x, theBall.y, ballRadius, ballRadius); // draw the thing
+
+    }
+
+    //---These run as soon as the game loads---------------------------------------------------------------------------------
+    setInterval(Do_a_Frame, 1000 / FPS); // this starts the Do_a_Frame function running 40 times per second
+    addEventListener("keydown", keyDownHandler); //listen for the press of a key
+    addEventListener("keyup", keyUpHandler); //listen for the release of a key
+
+    //---------------------------------------------------------------------------------------------------------------------
+    // The functions below handle pressing of keys
+    function keyDownHandler(event) {
+        // get the keyCode
+        switch (event.keyCode) {
+            // "up arrow" key
+            case 37:
+                // set upArrowPressed = true
+                leftArrowPressed = true;
+                break;
+            // "down arrow" key
+            case 39:
+                rightArrowPressed = true;
+                break;
+            case 32:
+                restart_game(); //press the space bar at any time to restart the game
+                break;
+        }
+    }
+
+    // gets activated when we release the key
+    function keyUpHandler(event) {
+        switch (event.keyCode) {
+            // "up arraow" key
+            case 37:
+                leftArrowPressed = false;
+                break;
+            // "down arrow" key
+            case 39:
+                rightArrowPressed = false;
+                break;
+
+        }
+    }
+//------------------------------------------------------------------------------------------------------
+
+</script>
+
+</html>
